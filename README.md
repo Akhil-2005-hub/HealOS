@@ -1,20 +1,47 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# HealOS
 
-# Run and deploy your AI Studio app
+## Self-Healing System for Performance Issue Detection and Guided Resolution
 
-This contains everything you need to run your app locally.
+HealOS is a system monitoring and self-healing platform designed to detect performance bottlenecks, analyze resource consumption, and provide guided solutions to improve system performance.
 
-View your app in AI Studio: https://ai.studio/apps/79d2164b-8214-4021-9f9b-2b5aaf26ddfd
+## Features
 
-## Run Locally
+- Real-time CPU monitoring
+- Memory usage tracking
+- Process monitoring
+- High resource consumption detection
+- Guided issue resolution
+- Process termination support
+- Interactive dashboard interface
 
-**Prerequisites:**  Node.js
+## Tech Stack
 
+### Frontend
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Backend
+- Python
+- Flask
+- psutil
+
+## Project Status
+
+🚧 Currently Under Development
+
+This project is actively being developed. Additional self-healing and automated resolution features are planned for future releases.
+
+## Future Enhancements
+
+- Automatic performance optimization
+- AI-powered issue diagnosis
+- Predictive system health analysis
+- Startup optimization suggestions
+- Smart resource recommendations
+
+## Author
+
+**Akhil R**  
+B.Tech Artificial Intelligence & Data Science
