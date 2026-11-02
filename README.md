@@ -2,6 +2,10 @@
 
 HealOS is a Windows desktop system-monitoring prototype. Its React dashboard displays CPU and memory use, charts recent readings, and lists running processes. A local Python service supplies the metrics. The dashboard can suggest manual steps and, after an explicit confirmation, request that the backend close a supported application.
 
+> **Sanitized visual preview:** This edited image is based on an earlier demo capture. It masks local computer details and may differ slightly from the exact running interface.
+
+![Sanitized HealOS dashboard preview](docs/screenshots/dashboard-sanitized-preview.png)
+
 ## What it currently does
 
 - Samples CPU and memory usage from the Windows computer running the backend.
