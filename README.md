@@ -67,13 +67,6 @@ package.json                 Frontend scripts and dependencies
 - Settings are stored in this browser only and are not synchronized between computers.
 - More operating systems, user-configurable thresholds, accessibility improvements, and verified automated tests can be added later.
 - AI-assisted diagnosis would need to be designed and implemented separately; the current app does not send system data to an AI service.
-## Earlier demonstration screenshots
-
-These screenshots document an earlier prototype build. The alert image includes the old “Fix Automatically” control, and the settings image uses the old automatic-close wording. The current source uses a confirmation before a supported app is terminated, so treat these as historical demonstration captures rather than screenshots of the current interface.
-
-![Earlier alert demonstration](docs/screenshots/prototype-alert-demo.png)
-
-![Earlier settings demonstration](docs/screenshots/prototype-settings-demo.png)
 
 ## Earlier demonstration screenshots
 
