@@ -19,6 +19,14 @@ import {
   CartesianGrid
 } from "recharts";
 
+const DEFAULT_ALLOWED_APPS = [
+  "chrome.exe",
+  "msedge.exe",
+  "code.exe",
+  "discord.exe",
+  "spotify.exe",
+] as const;
+
 
 // ===============================
 // Metric Card
@@ -69,7 +77,8 @@ const AlertModal = ({
   suggestion,
   handleAutoFix,
   handleManualFix,
-  handleSkip
+  handleSkip,
+  isClosing,
 }: any) => {
 
   if (!isOpen) return null;
@@ -92,9 +101,10 @@ const AlertModal = ({
 
           <button
             onClick={handleAutoFix}
+            disabled={isClosing}
             className="w-full py-2 rounded-lg bg-red-600 hover:bg-red-700"
           >
-            🔥 Fix Automatically
+            {isClosing ? "Closing app…" : "Terminate this app…"}
           </button>
 
           <button
@@ -136,24 +146,31 @@ export default function App() {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
 
   const [suggestion, setSuggestion] = useState("");
+  const [backendError, setBackendError] = useState("");
+  const [isClosing, setIsClosing] = useState(false);
 
   // SETTINGS
   const [showSettings, setShowSettings] = useState(false);
 
   // ALLOWED APPS
-  const [allowedApps, setAllowedApps] = useState([
+  const [allowedApps, setAllowedApps] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("healos.allowedApps");
+      if (!saved) return [...DEFAULT_ALLOWED_APPS];
+      const parsed: unknown = JSON.parse(saved);
+      return Array.isArray(parsed)
+        ? parsed.filter((app): app is string =>
+            typeof app === "string" && DEFAULT_ALLOWED_APPS.includes(app as typeof DEFAULT_ALLOWED_APPS[number]),
+          )
+        : [...DEFAULT_ALLOWED_APPS];
+    } catch {
+      return [...DEFAULT_ALLOWED_APPS];
+    }
+  });
 
-    "chrome.exe",
-
-    "msedge.exe",
-
-    "code.exe",
-
-    "discord.exe",
-
-    "spotify.exe"
-
-  ]);
+  useEffect(() => {
+    localStorage.setItem("healos.allowedApps", JSON.stringify(allowedApps));
+  }, [allowedApps]);
 
 
   // ===============================
@@ -165,7 +182,7 @@ export default function App() {
 
       const data = await getSystemData();
 
-      if (!data) return;
+      setBackendError("");
 
       setCpu(data.cpu);
 
@@ -196,6 +213,7 @@ export default function App() {
         (p: any) =>
 
           p.cpu > 10 &&
+          p.can_close &&
 
           allowedApps.includes(
             p.name.toLowerCase()
@@ -253,6 +271,7 @@ ${suggestionText}`
     } catch (error) {
 
       console.error(error);
+      setBackendError("Cannot reach the HealOS backend. Follow the local service steps in README.md, then refresh this page.");
     }
   };
 
@@ -267,6 +286,7 @@ ${suggestionText}`
       (p: any) =>
 
         p.cpu > 10 &&
+        p.can_close &&
 
         allowedApps.includes(
           p.name.toLowerCase()
@@ -285,18 +305,36 @@ ${suggestionText}`
 
     const top = validProcesses[0];
 
-    const result = await killProcess(top.pid);
+    if (!top.can_close) {
+      setSuggestion(`HealOS is not allowed to close ${top.name}. Choose a supported app in Settings.`);
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Terminate ${top.name}? It may close immediately, and unsaved work can be lost. Continue only if you are ready to close it.`,
+    );
+    if (!confirmed) return;
+
+    setIsClosing(true);
+    let result;
+    try {
+      result = await killProcess(top.pid, top.name);
+    } catch (error) {
+      result = { success: false, message: error instanceof Error ? error.message : "Could not reach the HealOS backend." };
+    } finally {
+      setIsClosing(false);
+    }
 
     if (result?.success) {
 
       setSuggestion(
-`✅ ${top.name} closed successfully`
+`✅ ${result.message}`
       );
 
     } else {
 
       setSuggestion(
-`❌ Failed to close ${top.name}`
+`❌ ${result?.message ?? `Failed to close ${top.name}.`}`
       );
     }
 
@@ -354,7 +392,7 @@ ${suggestionText}`
 
     return () => clearInterval(interval);
 
-  }, []);
+  }, [allowedApps, isAlertOpen]);
 
 
   // ===============================
@@ -391,6 +429,12 @@ ${suggestionText}`
 
 
       {/* METRIC CARDS */}
+      {backendError && (
+        <div role="alert" className="mb-5 rounded-xl border border-amber-500/50 bg-amber-950/40 p-4 text-amber-100">
+          {backendError}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
         <MetricCard
@@ -498,6 +542,7 @@ ${suggestionText}`
         handleAutoFix={handleAutoFix}
         handleManualFix={handleManualFix}
         handleSkip={handleSkip}
+        isClosing={isClosing}
       />
 
 
@@ -524,7 +569,7 @@ ${suggestionText}`
             </div>
 
             <p className="text-gray-400 mb-4">
-              Select apps HealOS can close automatically
+              Choose supported apps that may trigger an alert. HealOS asks before closing one.
             </p>
 
             <div className="overflow-y-auto h-[350px] pr-2">
@@ -542,8 +587,11 @@ ${suggestionText}`
 
                   {/* TOGGLE BUTTON */}
                   <button
+                    disabled={!p.can_close}
 
                     onClick={() => {
+
+                      if (!p.can_close) return;
 
                       const appName =
                         p.name.toLowerCase();
@@ -571,7 +619,7 @@ ${suggestionText}`
 
                     }}
 
-                    className={`px-5 py-2 rounded-xl font-semibold ${
+                    className={`px-5 py-2 rounded-xl font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${
                       allowedApps.includes(
                         p.name.toLowerCase()
                       )
@@ -584,7 +632,7 @@ ${suggestionText}`
                       p.name.toLowerCase()
                     )
                       ? "Allowed"
-                      : "Blocked"}
+                      : p.can_close ? "Blocked" : "Unsupported"}
 
                   </button>
 
